@@ -1,0 +1,30 @@
+<script>
+async function submitCode() {
+  const code = document.getElementById("codeInput").value;
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Verifying...";
+
+  await fetch("/submit-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code })
+  });
+
+  const interval = setInterval(async () => {
+    const res = await fetch(`/check-code/${code}`);
+    const data = await res.json();
+
+    if (data.approved === true) {
+      clearInterval(interval);
+      window.location.href = "success.html"; // ✅ Correct Code
+    }
+
+    if (data.approved === false) {
+      clearInterval(interval);
+      alert("❌ Code rejected, please enter again.");
+      window.location.href = "code.html"; // ❌ Wrong Code
+    }
+  }, 1500);
+}
+</script>

