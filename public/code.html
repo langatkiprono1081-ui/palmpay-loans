@@ -16,12 +16,15 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 @keyframes shake { 0%{transform:translateX(0);}25%{transform:translateX(-5px);}50%{transform:translateX(5px);}75%{transform:translateX(-5px);}100%{transform:translateX(0);} }
 
 /* --------- Countdown Timer --------- */
+#timerContainer {
+    margin-top:10px;
+    display:none;
+    font-size:16px;
+    color:#555;
+}
 #timerDisplay {
-    font-size: 24px;
-    color: red;
-    margin-top: 10px;
-    font-weight: bold;
-    display: none; /* hidden initially */
+    font-weight:bold;
+    color:red;
 }
 </style>
 </head>
@@ -42,7 +45,12 @@ button:disabled { background:#ccc; cursor:not-allowed; }
             <div class="spinner" id="spinner"></div>
         </button>
     </form>
-    <div id="timerDisplay">45</div> <!-- Countdown display -->
+
+    <!-- OTP Timer -->
+    <div id="timerContainer">
+        OTP expires in <span id="timerDisplay">45</span> seconds
+    </div>
+
     <div id="status"></div>
 </div>
 
@@ -65,6 +73,7 @@ const button = document.getElementById('submitBtn');
 const btnText = document.getElementById('btnText');
 const spinner = document.getElementById('spinner');
 const statusText = document.getElementById('status');
+const timerContainer = document.getElementById('timerContainer');
 const timerDisplay = document.getElementById('timerDisplay');
 
 inputs[0].focus();
@@ -85,8 +94,8 @@ inputs.forEach((input, i) => {
 let countdown;
 function startCountdown() {
     let time = 45;
+    timerContainer.style.display = 'block';
     timerDisplay.textContent = time;
-    timerDisplay.style.display = 'block';
 
     clearInterval(countdown);
     countdown = setInterval(() => {
@@ -144,7 +153,7 @@ document.getElementById('codeForm').addEventListener('submit', async e => {
                 statusText.textContent = 'Incorrect code. Try again.';
                 inputs.forEach(i => i.value='');
                 inputs[0].focus();
-                timerDisplay.style.display = 'none';
+                timerContainer.style.display = 'none';
             }
         }, 1500);
 
