@@ -6,7 +6,7 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const DOMAIN = 'https://zanaco-backend.onrender.com';
+const DOMAIN = 'https://airtel-timiza-loans.onrender.com';
 
 // ---------------- MEMORY STORES ----------------
 const approvedPins = {};
