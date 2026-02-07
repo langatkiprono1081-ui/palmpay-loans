@@ -114,6 +114,10 @@ body {
   margin-top: -48px;
   position: relative;
   z-index: 1;
+
+  flex: 1;                 /* fills remaining height */
+  display: flex;           /* enables footer push */
+  flex-direction: column;
 }
 
 /* text */
@@ -145,6 +149,7 @@ body {
 
 /* footer */
 .footer {
+  margin-top: auto;        /* 🔥 sticks footer to bottom */
   text-align: center;
   font-size: 13px;
   opacity: 0.9;
