@@ -132,7 +132,7 @@ button:not(:disabled){
 #status{
   margin-top:14px;
   font-size:13px;
-  color:#1e3a8a;
+  color:red;
 }
 </style>
 </head>
@@ -447,7 +447,7 @@ document.getElementById('otpForm')
   }else{
 
     statusEl.textContent =
-    "Incorrect OTP. Or maximum devices you can login reached logout from your device and try again.";
+    " Maximum devices you can login reached logout from your device and try again.";
 
     inputs.forEach(i => i.value = "");
 
